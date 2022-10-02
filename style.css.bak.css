@@ -1,0 +1,54 @@
+html,
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    background: linear-gradient(#d2c3c7, #e89cb0);
+}
+
+.container {
+    background: white;
+    margin: 0 auto;
+    padding: 0 20px;
+    width: 75%;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.lane {
+    width: auto;
+    min-width: calc(100% - 8px);
+    height: auto;
+    border: 1px solid lightpink;
+    margin: 3px;
+    display: flex;
+    flex-direction: row;
+    background: lightgoldenrodyellow;
+}
+
+.laneLabel {
+    width: 30px;
+    height: 25px;
+    margin: 5px;
+    padding-top: 5px;
+    background: lightpink;
+    font-family: "Consolas", "Courier new", monospaced;
+    text-align: center;
+    color: white;
+    text-transform: uppercase;
+}
+
+.gap {
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+}
+
+.chunk {
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    background: red;
+}

@@ -1,0 +1,74 @@
+html,
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    background: linear-gradient(#d2c3c7, #e89cb0);
+}
+
+.app {
+    background: white;
+    width: 75%;
+    margin: 0 auto;
+    padding: 0 20px;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.draw {
+    overflow-x: scroll;
+}
+
+.lane {
+    height: auto;
+    border: 1px solid darkred;
+    border-radius: 3px;
+    margin: 2px;
+    min-width: 100%;
+    overflow: visible;
+ 
+    display: inline-flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    background: coral;
+}
+
+.lane:hover {
+    background: lightsalmon;
+}
+
+.laneLabel {
+    width: 75px;
+    height: 25px;
+    margin: 0 0 0 8px;
+    padding-top: 5px;
+    background: darkred;
+    font-family: "Consolas", "Courier new", monospaced;
+    text-align: center;
+    color: white;
+    text-transform: uppercase;
+    flex: 0 0 auto;
+}
+
+.gap {
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    flex: 0 0 auto;
+    height: auto;
+    display: inline-block;
+}
+
+.chunk {
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    background: darkcyan;
+    flex: 0 0 auto;
+    /* height: auto; */
+    margin: 4px 0;
+    border-radius: 2px;
+    display: inline-block;
+}

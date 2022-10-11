@@ -42,7 +42,7 @@ body {
 .laneLabel {
     width: 75px;
     height: 25px;
-    margin: 0 0 0 8px;
+    margin: 0 8px;
     padding-top: 5px;
     background: darkred;
     font-family: "Consolas", "Courier new", monospaced;

@@ -1,25 +1,38 @@
 // LogDrawer is responsible for visualizing key press records as lanes and chunks in the DOM.
 class LogDrawer {
+    static DEFAULT_CONTAINER_SELECTOR = ".container";
+    static DEFAULT_MS_PER_PX = 5;
+    static DEFAULT_REFRESH_RATE = 30;
+
     /**
      * @param {Object} [options] - Optional configuration for drawer.
      * @param {number} [options.msPerPxRate] - Milliseconds per pixel for chunk width.
      * @param {number} [options.refreshRate] - Refresh rate in ms for drawing.
+     * @param {string} [options.containerSelector] - CSS selector for container.
      */
     constructor(options = {}) {
-        // Magic numbers replaced with named constants and comments
-        this.MS_PER_PX = options.msPerPxRate || 5; // ms per pixel for chunk width
-        this.REFRESH_RATE = options.refreshRate || 30; // ms between redraws
+        this.MS_PER_PX = options.msPerPxRate || LogDrawer.DEFAULT_MS_PER_PX;
+        this.REFRESH_RATE = options.refreshRate || LogDrawer.DEFAULT_REFRESH_RATE;
+        this.CONTAINER_SELECTOR = options.containerSelector || LogDrawer.DEFAULT_CONTAINER_SELECTOR;
         this.aDrew = [];
         this.mLastEnds = new Map();
         // Defensive DOM query
-        const container = document.querySelector(".container");
+        const container = document.querySelector(this.CONTAINER_SELECTOR);
         if (!container) {
-            throw new Error("Container element with class 'container' not found.");
+            // Instead of throwing, log error and create a fallback container
+            console.error(`Container element with selector '${this.CONTAINER_SELECTOR}' not found. Creating fallback container.`);
+            this.fallbackContainer = document.createElement("div");
+            this.fallbackContainer.classList.add("container");
+            document.body.appendChild(this.fallbackContainer);
+            this.drawEl = document.createElement("div");
+            this.drawEl.classList.add("draw");
+            this.fallbackContainer.appendChild(this.drawEl);
+        } else {
+            this.drawEl = document.createElement("div");
+            this.drawEl.classList.add("draw");
+            container.innerHTML = "";
+            container.appendChild(this.drawEl);
         }
-        this.drawEl = document.createElement("div");
-        this.drawEl.classList.add("draw");
-        container.innerHTML = "";
-        container.appendChild(this.drawEl);
         return this;
     }
 
@@ -72,6 +85,9 @@ class LogDrawer {
                     // Defensive scroll update
                     if (typeof this.drawEl.scrollLeftMax !== 'undefined') {
                         this.drawEl.scrollLeft = this.drawEl.scrollLeftMax;
+                    } else {
+                        // Fallback for browsers without scrollLeftMax
+                        this.drawEl.scrollLeft = this.drawEl.scrollWidth;
                     }
                 });
         });
@@ -85,6 +101,8 @@ class Logger {
         this.aRecord = [];
         this._zero = null;
         this._keysDown = {};
+        // Hook for pause/resume functionality
+        this.isPaused = false;
         return this;
     }
     /**
@@ -95,12 +113,14 @@ class Logger {
         this._keysDown = {};
         this.aLogger.length = 0;
         this.aRecord.length = 0;
+        this.isPaused = false;
     }
     /**
      * Logs a key event with timestamp and offset.
      * @param {KeyboardEvent} oEvent
      */
     logEvent(oEvent) {
+        if (this.isPaused) return;
         if (!oEvent || typeof oEvent.keyCode === 'undefined') return;
         const dNow = Date.now();
         if (!this._zero) this._zero = dNow;     // on first record, restart zero
@@ -112,7 +132,9 @@ class Logger {
      * @param {number} sKeyCode
      */
     startRecord(sKey, sKeyCode) {
+        if (this.isPaused) return;
         if (!sKey || typeof sKeyCode === 'undefined') return;
+        // Prevent duplicate keydown events (e.g., rapid repeats)
         if (this._keysDown[sKey]) return;
         const dNow = Date.now();
         if (!this._zero) this._zero = dNow;     // on first record, restart zero
@@ -124,8 +146,13 @@ class Logger {
      * @param {number} sKeyCode
      */
     endRecord(sKey, sKeyCode) {
+        if (this.isPaused) return;
         if (!sKey || typeof sKeyCode === 'undefined') return;
-        if (!this._keysDown[sKey]) return;
+        if (!this._keysDown[sKey]) {
+            // Edge case: keyup without keydown
+            console.warn(`Keyup received for '${sKey}' (${sKeyCode}) without corresponding keydown.`);
+            return;
+        }
         this.aRecord.push({
             key: sKey,
             keyCode: sKeyCode,
@@ -135,31 +162,46 @@ class Logger {
         delete this._keysDown[sKey];
     }
 }
-// Handles keydown event: logs and starts recording
+/**
+ * Handles keydown event: logs and starts recording
+ * Ignores repeated keydown events for the same key.
+ */
 const keyStart = (oLogger, oEvent) => {
+    if (!oLogger || !oEvent) return;
     oLogger.logEvent(oEvent);
     oLogger.startRecord(oEvent.key, oEvent.keyCode);
 };
 
-// Handles keyup event: logs and ends recording
+/**
+ * Handles keyup event: logs and ends recording
+ */
 const keyEnd = (oLogger, oEvent) => {
+    if (!oLogger || !oEvent) return;
     oLogger.logEvent(oEvent);
     oLogger.endRecord(oEvent.key, oEvent.keyCode);
 };
 
-// Initializes logging and drawing system
-function startLogging() {
+/**
+ * Initializes logging and drawing system
+ * Now supports configurable options and extensibility hooks.
+ */
+function startLogging(options = {}) {
     const oLogger = new Logger();
-    const oDrawer = new LogDrawer();
+    const oDrawer = new LogDrawer(options);
     oLogger.reset();
 
     document.onkeydown = keyStart.bind(null, oLogger);
     document.onkeyup = keyEnd.bind(null, oLogger);
 
-    setInterval(() => oDrawer.draw(oLogger), oDrawer.REFRESH_RATE);
+    setInterval(() => {
+        if (!oLogger.isPaused) {
+            oDrawer.draw(oLogger);
+        }
+    }, oDrawer.REFRESH_RATE);
 
+    // Expose for debugging and extensibility
     document.treSays = { drawer: oDrawer, logger: oLogger };
 }
 
 // Wait for DOM ready before starting logging
-document.onreadystatechange = startLogging;
+document.onreadystatechange = () => startLogging();
